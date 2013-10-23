@@ -1,0 +1,17 @@
+<?php
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function facebooklink_field_formatter_info() {
+  return array(
+    'facebooklink_formatter' => array( //Machine name of the formatter
+      'label' => t('Facebook Link'),
+      'field types' => array('text'), //This will only be available to text fields
+      'settings'  => array( //Array of the settings we'll create
+        'pic_size' => 'small', //give a default value for when the form is first loaded
+        'tooltip' => 'Link to user Facebook page', //ditto
+      ),
+    ),
+  );
+}
