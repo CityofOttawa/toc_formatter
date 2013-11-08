@@ -20,3 +20,63 @@ function toc_formatter_entity_view($entity, $view_mode) {
      print_r($entity);
   }
 }
+
+/**
+ * Parse html looking for heading data
+ *
+ * @param string $html
+ *  HTML document source
+ * @param array tags [optional]
+ *  List of HTML tags to search for
+ * @return array|boolean
+ *  Returns an array of heading information, FALSE otherwise.
+ */
+function toc_formatter_get_headings($html, $tags = array('h1', 'h2', 'h3')) {
+  if (empty($tags) or empty($html)) {
+    return FALSE;
+  }
+  
+  // Build the xpath predicate
+  $query = '//*[';
+
+  foreach ($tags as $tag) {
+    $query .= "name()='$tag' or ";
+  }
+  
+  // Remove the last ' or '
+  $query = toc_formatter_function_str_lreplace(' or ', '', $query);
+
+  $query .= ']';
+  
+  dpm($query);
+  
+  // Load the document
+  $doc = new DOMDocument();
+  @$doc->loadHTML($html);
+  $x = new DOMXPath($doc);  
+
+  // Run the query
+  $elements = $x->query($query);
+  foreach ($elements as $el) {
+    $names[$el->nodeName] = array(
+      'name' => $el->getAttribute('name'),
+      'id' => $el->getAttribute('id'),
+    );
+  }
+  
+  return $names;
+}
+
+/**
+ * Replace last occurence of a string
+ * @see str_replace().
+ */
+function toc_formatter_function_str_lreplace($search, $replace, $subject) {
+  $pos = strrpos($subject, $search);
+
+  if($pos !== false) {
+    $subject = substr_replace($subject, $replace, $pos, strlen($search));
+  }
+
+  return $subject;
+}
