@@ -6,6 +6,25 @@
  */
 
 /**
+ * Implements hook_filter_info().
+ */
+function toc_formatter_filter_info() {
+    $filters['toc_content'] = array(
+        'title'             => t('Contents for Table of Contents'),
+        'description'       => t('Adds unique targets to heading tags for use by the table of contents view mode.'),
+        'process callback'  => '_toc_formatter_filter_process',
+        'settings callback' => '_toc_formatter_filter_settings',
+        'default settings'  => array(
+            'tags'    => array('h1', 'h2', 'h3'),
+            'target'  => array('name', 'id'),
+            'anchors' => FALSE,
+        ),
+        'weight'            => 99999,
+    );
+    return $filters;
+}
+
+/**
  * Implements hook_entity_info_alter().
  */
 function toc_formatter_entity_info_alter(&$entity_info) {
@@ -44,10 +63,8 @@ function toc_formatter_process(&$variables, $hook) {
     // TODO: check if this is in fact a node.
     // TODO: figure out how not to force the default view mode, and find out what the node is using.
     if( $variables['view_mode'] == 'table of contents') {
-        //dpm($variables);
         $names = toc_formatter_get_headings(drupal_render(field_view_field('node', $variables['node'], 'body', 'default')));
         if(!empty($names)) {
-          dpm($names);
           $variables['toc'] = toc_formatter_generate_toc($names);
         }
     }
@@ -98,10 +115,11 @@ function toc_formatter_get_headings($html, $tags = array('h1', 'h2', 'h3')) {
   // Run the query
   $elements = $x->query($query);
   foreach ($elements as $el) {
-    $names[$el->nodeName] = array(
-      'name' => $el->getAttribute('name'),
-      'id' => $el->getAttribute('id'),
-      'value' => $el->nodeValue,
+    $names[] = array(
+      'element' => $el->nodeName,
+      'name'    => $el->getAttribute('name'),
+      'id'      => $el->getAttribute('id'),
+      'value'   => $el->nodeValue,
     );
   }
   
@@ -147,6 +165,79 @@ function toc_formatter_generate_toc($names) {
       'data' => l($name['value'], current_path(), array('fragment' => $name['fragment'])),
     );
   }
-  
   return theme('item_list', array('items' => $items, 'title' => t('Table of Contents'), 'type' => 'ol', 'attributes' => array('class' => array('toc_formatter'))));
+}
+
+function _toc_formatter_filter_process($text, $filter) {
+    $doc = filter_dom_load($text);
+
+    $x_doc = new DOMXPath($doc);
+
+    // Build the xpath predicate
+    $query = '//*[';
+
+    foreach ($filter->settings['tags'] as $tag) {
+        $query .= "name()='$tag' or ";
+    }
+
+    // Remove the last ' or '
+    $query = toc_formatter_function_str_lreplace(' or ', '', $query);
+
+    // Cap off the query
+    $query .= ']';
+
+    // Run the query
+    $elements = $x_doc->query($query);
+    $i = 1;
+    foreach ($elements as $el) {
+        // If the name is targeted
+        if( in_array('name', $filter->settings['target']) ) {
+            $name = $el->getAttribute('name');
+            if(empty($name)) {
+                $el->setAttribute('name','toc_' . $el->nodeName . '_' . $i);
+            }
+        }
+        // If the id is targeted
+        if( in_array('id', $filter->settings['target']) ) {
+            $id = $el->getAttribute('id');
+            if(empty($id)) {
+               $el->setAttribute('id', 'toc_' . $el->nodeName . '_' . $i);
+            }
+        }
+        
+        $i ++;
+    }
+    return filter_dom_serialize($x_doc->document);
+}
+
+function _toc_formatter_filter_settings($form, $form_state, $filter, $format, $defaults) {
+    $settings['warning'] = array(
+        '#markup' => '<p>' . t('This should be the last filter to run.') . '</p>',
+    );
+
+    $settings['tags'] = array(
+        '#type'          => 'checkboxes',
+        '#title'         => t('Tags'),
+        '#options'       => array('h1' => 'h1', 'h2' => 'h2', 'h3' => 'h3', 'h4' => 'h4', 'h5' => 'h5', 'h6' => 'h6'),
+        '#default_value' => isset($filter->settings['tags']) ? $filter->settings['tags'] : $defaults['tags'],
+        '#description'   => t('Tags that will be included in the table of contents.'),
+    );
+
+    $settings['target'] = array(
+        '#type'          => 'checkboxes',
+        '#title'         => t('Target'),
+        '#options'       => array('id' => 'id', 'name' => 'name'),
+        '#default_value' => isset($filter->settings['target']) ? $filter->settings['target'] : $defaults['target'],
+        '#description'   => t('What will be used in the table of contents links to target the headings.'),
+    );
+
+    $settings['anchors'] = array(
+       '#type'          => 'checkbox',
+       '#title'         => t('Add anchors to the headings.'),
+       '#default_value' => isset($filter->settings['anchors']) ? $filter->settings['anchors'] : $defaults['anchors'],
+       '#description'   => t('Some older browsers can only link to anchors.'),
+       '#prefix'        => '<strong>' . t('Generate Anchors') . '</strong><br />',
+    );
+
+    return $settings;
 }
