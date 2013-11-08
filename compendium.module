@@ -8,12 +8,12 @@
 /**
  * Implements hook_filter_info().
  */
-function toc_formatter_filter_info() {
+function compendium_filter_info() {
     $filters['toc_content'] = array(
         'title'             => t('Contents for Table of Contents'),
         'description'       => t('Adds unique targets to heading tags for use by the table of contents view mode.'),
-        'process callback'  => '_toc_formatter_filter_process',
-        'settings callback' => '_toc_formatter_filter_settings',
+        'process callback'  => '_compendium_filter_process',
+        'settings callback' => '_compendium_filter_settings',
         'default settings'  => array(
             'tags'    => array('h1', 'h2', 'h3'),
             'target'  => array('name', 'id'),
@@ -27,7 +27,7 @@ function toc_formatter_filter_info() {
 /**
  * Implements hook_entity_info_alter().
  */
-function toc_formatter_entity_info_alter(&$entity_info) {
+function compendium_entity_info_alter(&$entity_info) {
   $entity_info['node']['view modes']['table of contents'] = array(
     'label' => t('Table of Contents'),
     'custom settings' => TRUE,
@@ -37,12 +37,12 @@ function toc_formatter_entity_info_alter(&$entity_info) {
 /*
  * Implements hook_theme().
  */
-function toc_formatter_theme() {
+function compendium_theme() {
     return array(
         'node__view_mode__table_of_contents' => array(
             'variables' => array ( 'node' => NULL, ),
             'template'  => 'node--view-mode--table-of-contents',
-            'path'      => drupal_get_path('module', 'toc_formatter') . '/templates',
+            'path'      => drupal_get_path('module', 'compendium') . '/templates',
         ),
     );
 }
@@ -50,7 +50,7 @@ function toc_formatter_theme() {
 /*
  * Implements hook_preprocess().
  */
-function toc_formatter_preprocess(&$variables, $hook) {
+function compendium_preprocess(&$variables, $hook) {
     if( $variables['view_mode'] == 'table of contents') {
         $variables['theme_hook_suggestions'][] = 'node__view_mode__table_of_contents';
     }
@@ -59,13 +59,13 @@ function toc_formatter_preprocess(&$variables, $hook) {
 /*
  * Implements hook_process().
  */
-function toc_formatter_process(&$variables, $hook) {
+function compendium_process(&$variables, $hook) {
     // TODO: check if this is in fact a node.
     // TODO: figure out how not to force the default view mode, and find out what the node is using.
     if( $variables['view_mode'] == 'table of contents') {
-        $names = toc_formatter_get_headings(drupal_render(field_view_field('node', $variables['node'], 'body', 'default')));
+        $names = compendium_get_headings(drupal_render(field_view_field('node', $variables['node'], 'body', 'default')));
         if(!empty($names)) {
-          $variables['toc'] = toc_formatter_generate_toc($names);
+          $variables['toc'] = compendium_generate_toc($names);
         }
     }
 }
@@ -73,8 +73,8 @@ function toc_formatter_process(&$variables, $hook) {
 /**
  * Implements hook_theme_registry_alter().
  */
-function toc_formatter_theme_registry_alter(&$theme_registry) {
-    $theme_registry['node']['preprocess functions'][] = 'toc_formatter_preprocess';
+function compendium_theme_registry_alter(&$theme_registry) {
+    $theme_registry['node']['preprocess functions'][] = 'compendium_preprocess';
 }
 
 /**
@@ -87,7 +87,7 @@ function toc_formatter_theme_registry_alter(&$theme_registry) {
  * @return array|boolean
  *  Returns an array of heading information, FALSE otherwise.
  */
-function toc_formatter_get_headings($html, $tags = array('h1', 'h2', 'h3')) {
+function compendium_get_headings($html, $tags = array('h1', 'h2', 'h3')) {
   if (empty($tags) or empty($html)) {
     return FALSE;
   }
@@ -100,7 +100,7 @@ function toc_formatter_get_headings($html, $tags = array('h1', 'h2', 'h3')) {
   }
   
   // Remove the last ' or '
-  $query = toc_formatter_function_str_lreplace(' or ', '', $query);
+  $query = compendium_function_str_lreplace(' or ', '', $query);
 
   // Cap off the query
   $query .= ']';
@@ -130,7 +130,7 @@ function toc_formatter_get_headings($html, $tags = array('h1', 'h2', 'h3')) {
  * Replace last occurence of a string
  * @see str_replace().
  */
-function toc_formatter_function_str_lreplace($search, $replace, $subject) {
+function compendium_function_str_lreplace($search, $replace, $subject) {
   $pos = strrpos($subject, $search);
 
   if($pos !== false) {
@@ -145,7 +145,7 @@ function toc_formatter_function_str_lreplace($search, $replace, $subject) {
  *
  * @see http://stackoverflow.com/questions/8764582/how-can-i-implement-the-multi-level-list-in-drupal7-with-theme-item-list
  */
-function toc_formatter_generate_toc($names) {
+function compendium_generate_toc($names) {
   $items = array();
 
   foreach ($names as $name) {
@@ -165,10 +165,10 @@ function toc_formatter_generate_toc($names) {
       'data' => l($name['value'], current_path(), array('fragment' => $name['fragment'])),
     );
   }
-  return theme('item_list', array('items' => $items, 'title' => t('Table of Contents'), 'type' => 'ol', 'attributes' => array('class' => array('toc_formatter'))));
+  return theme('item_list', array('items' => $items, 'title' => t('Table of Contents'), 'type' => 'ol', 'attributes' => array('class' => array('compendium'))));
 }
 
-function _toc_formatter_filter_process($text, $filter) {
+function _compendium_filter_process($text, $filter) {
     $doc = filter_dom_load($text);
 
     $x_doc = new DOMXPath($doc);
@@ -181,7 +181,7 @@ function _toc_formatter_filter_process($text, $filter) {
     }
 
     // Remove the last ' or '
-    $query = toc_formatter_function_str_lreplace(' or ', '', $query);
+    $query = compendium_function_str_lreplace(' or ', '', $query);
 
     // Cap off the query
     $query .= ']';
@@ -204,13 +204,13 @@ function _toc_formatter_filter_process($text, $filter) {
                $el->setAttribute('id', 'toc_' . $el->nodeName . '_' . $i);
             }
         }
-        
+
         $i ++;
     }
     return filter_dom_serialize($x_doc->document);
 }
 
-function _toc_formatter_filter_settings($form, $form_state, $filter, $format, $defaults) {
+function _compendium_filter_settings($form, $form_state, $filter, $format, $defaults) {
     $settings['warning'] = array(
         '#markup' => '<p>' . t('This should be the last filter to run.') . '</p>',
     );

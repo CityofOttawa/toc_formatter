@@ -1,4 +1,0 @@
-name = Table of Contents Formatter
-description = Add a view formatter for table of contents.
-core = 7.x
-dependencies[] = entity
