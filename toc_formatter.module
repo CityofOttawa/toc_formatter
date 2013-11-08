@@ -15,17 +15,6 @@ function toc_formatter_entity_info_alter(&$entity_info) {
   );
 }
 
-/** 
- * Implements hook_entity_view().
- */
-function toc_formatter_entity_view($entity, $view_mode) {
-  var_dump($view_mode);   
-  var_dump($entity);
-  if ($view_mode == 'table of contents') {
-     print_r($entity);
-  }
-}
-
 /**
  * Parse html looking for heading data
  *
@@ -115,4 +104,41 @@ function toc_formatter_generate_toc($names) {
   }
   
   return theme('item_list', array('items' => $items, 'title' => t('Table of Contents'), 'type' => 'ol', 'attributes' => array('class' => array('toc_formatter'))));
+}
+/*
+ * Implements hook_theme().
+ */
+function toc_formatter_theme() {
+    return array(
+      'node__view_mode__table_of_contents' => array(
+        'variables' => array ( 'node' => NULL, ),
+        'template'  => 'node--view-mode--table-of-contents',
+        'path'      => drupal_get_path('module', 'toc_formatter') . '/templates',
+      ),
+    );
+}
+
+/*
+ * Implements hook_preprocess().
+ */
+function toc_formatter_preprocess(&$variables, $hook) {
+    if( $variables['view_mode'] == 'table of contents') {
+        $variables['theme_hook_suggestions'][] = 'node__view_mode__table_of_contents';
+    }
+}
+
+/*
+ * Implements hook_process().
+ */
+function toc_formatter_process(&$variables, $hook) {
+    if( $variables['view_mode'] == 'table of contents') {
+      dpm($variables);
+    }
+}
+
+/**
+ * Implements hook_theme_registry_alter().
+ */
+function toc_formatter_theme_registry_alter(&$theme_registry) {
+    $theme_registry['node']['preprocess functions'][] = 'toc_formatter_preprocess';
 }
