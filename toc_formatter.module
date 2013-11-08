@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * TOC Formatter module
+ */
+
+/**
  * Implements hook_entity_info_alter().
  */
 function toc_formatter_entity_info_alter(&$entity_info) {
