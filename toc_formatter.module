@@ -4,19 +4,4 @@
  * Implements hook_entity_info_alter().
  */
 function toc_formatter_entity_info_alter(&$entity_info) {
-  $entity_info['node']['view modes']['table of contents'] = array(
-    'label' => t('Table of Contents'),
-    'custom settings' => TRUE,
-  );
-}
-
-/** 
- * Implements hook_entity_view().
- */
-function toc_formatter_entity_view($entity, $view_mode) {
-  var_dump($view_mode);   
-  var_dump($entity);
-  if ($view_mode == 'table of contents') {
-     print_r($entity);
-  }
 }
