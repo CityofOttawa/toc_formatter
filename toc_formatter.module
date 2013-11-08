@@ -4,4 +4,8 @@
  * Implements hook_entity_info_alter().
  */
 function toc_formatter_entity_info_alter(&$entity_info) {
+  $entity_info['node']['view modes']['table of contents'] = array(
+    'label' => t('Table of Contents'),
+    'custom settings' => TRUE,
+  );
 }
