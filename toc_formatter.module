@@ -51,14 +51,15 @@ function toc_formatter_get_headings($html, $tags = array('h1', 'h2', 'h3')) {
   // Remove the last ' or '
   $query = toc_formatter_function_str_lreplace(' or ', '', $query);
 
+  // Cap off the query
   $query .= ']';
-  
-  dpm($query);
   
   // Load the document
   $doc = new DOMDocument();
   @$doc->loadHTML($html);
   $x = new DOMXPath($doc);  
+
+  // @todo retain the hierarchy of the elements
 
   // Run the query
   $elements = $x->query($query);
@@ -66,6 +67,7 @@ function toc_formatter_get_headings($html, $tags = array('h1', 'h2', 'h3')) {
     $names[$el->nodeName] = array(
       'name' => $el->getAttribute('name'),
       'id' => $el->getAttribute('id'),
+      'value' => $el->nodeValue,
     );
   }
   
@@ -84,4 +86,33 @@ function toc_formatter_function_str_lreplace($search, $replace, $subject) {
   }
 
   return $subject;
+}
+
+/**
+ * Generate a list of items to be used as a table of contents
+ *
+ * @see http://stackoverflow.com/questions/8764582/how-can-i-implement-the-multi-level-list-in-drupal7-with-theme-item-list
+ */
+function toc_formatter_generate_toc($names) {
+  $items = array();
+
+  foreach ($names as $name) {
+    // Set the fragment value.
+    // @see http://stackoverflow.com/questions/484719/html-anchors-with-name-or-id
+    if (!empty($name['id'])) {
+      $name['fragment'] = $name['id'];      
+    }
+    elseif (!empty($name['name'])) {
+      $name['fragment'] = $name['name'];
+    }
+    else {
+      // Nothing to link to so skip it as a ToC element
+      break;
+    }
+    $items[] = array(
+      'data' => l($name['value'], current_path(), array('fragment' => $name['fragment'])),
+    );
+  }
+  
+  return theme('item_list', array('items' => $items, 'title' => t('Table of Contents'), 'type' => 'ol', 'attributes' => array('class' => array('toc_formatter'))));
 }
