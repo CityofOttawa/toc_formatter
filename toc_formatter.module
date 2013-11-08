@@ -1,17 +1,22 @@
 <?php
 
 /**
- * Implements hook_field_formatter_info().
+ * Implements hook_entity_info_alter().
  */
-function facebooklink_field_formatter_info() {
-  return array(
-    'facebooklink_formatter' => array( //Machine name of the formatter
-      'label' => t('Facebook Link'),
-      'field types' => array('text'), //This will only be available to text fields
-      'settings'  => array( //Array of the settings we'll create
-        'pic_size' => 'small', //give a default value for when the form is first loaded
-        'tooltip' => 'Link to user Facebook page', //ditto
-      ),
-    ),
+function toc_formatter_entity_info_alter(&$entity_info) {
+  $entity_info['node']['view modes']['table of contents'] = array(
+    'label' => t('Table of Contents'),
+    'custom settings' => TRUE,
   );
+}
+
+/** 
+ * Implements hook_entity_view().
+ */
+function toc_formatter_entity_view($entity, $view_mode) {
+  var_dump($view_mode);   
+  var_dump($entity);
+  if ($view_mode == 'table of contents') {
+     print_r($entity);
+  }
 }
